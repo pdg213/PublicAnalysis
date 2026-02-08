@@ -3,3 +3,5 @@ downloads/
 __pycache__/
 *.pyc
 .venv/
+download_history.json
+debug_*.png
