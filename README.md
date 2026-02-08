@@ -1,50 +1,43 @@
 # BAMSec Transcript Downloader
 
-Downloads the most recent earnings call transcripts from your BAMSec account as PDFs. Just type a stock ticker and it grabs the 8 most recent transcripts.
+A simple web app that downloads the most recent earnings call transcripts from your BAMSec account as PDFs. Enter a stock ticker, click download, and get a ZIP file of transcripts.
 
 ## What You Need
 
-- A computer with **Python 3** installed ([download here](https://www.python.org/downloads/))
+- A computer with **Python 3** installed ([download here](https://www.python.org/downloads/) — make sure to check "Add Python to PATH" during install)
 - A **paid BAMSec subscription** (free trials have limited transcript access)
 
 ## First-Time Setup (do this once)
 
-1. Open your terminal (Mac: search "Terminal" in Spotlight / Windows: search "Command Prompt")
-2. Navigate to this folder: `cd path/to/PublicAnalysis`
-3. Run the setup script:
+1. Open **PowerShell** (Windows) or **Terminal** (Mac)
+2. Navigate to this folder (replace the path with wherever you put it):
    ```
-   ./setup.sh
+   cd "C:\Users\YourName\Desktop\PublicAnalysis"
    ```
-4. Create a file called `.env` in this folder (right next to this README) with your BAMSec login:
+3. Install the required packages:
    ```
-   BAMSEC_EMAIL=your_email@example.com
-   BAMSEC_PASSWORD=your_password
+   pip install -r requirements.txt
+   ```
+4. Install the browser used for automation:
+   ```
+   python -m playwright install chromium
    ```
 
 ## How to Use
 
-Open your terminal, go to this folder, and run:
-
-```
-./run.sh RH
-```
-
-Replace `RH` with whatever stock ticker you want. The transcripts will be saved as PDFs in a `downloads/` folder.
-
-### More Examples
-
-```
-./run.sh AAPL       # Download 8 transcripts for Apple
-./run.sh MSFT 4     # Download only 4 transcripts for Microsoft
-./run.sh GOOG       # Download 8 transcripts for Google
-```
-
-## Where Do the PDFs Go?
-
-They get saved to: `downloads/TICKER/` (e.g., `downloads/RH/`)
+1. In PowerShell/Terminal, navigate to this folder and run:
+   ```
+   python app.py
+   ```
+2. Open your web browser and go to: **http://localhost:5000**
+3. Enter your BAMSec email and password
+4. Enter a stock ticker (e.g. RH, AAPL, MSFT)
+5. Click **Download Transcripts**
+6. Wait 1-2 minutes — a ZIP file with the PDFs will download automatically
 
 ## Troubleshooting
 
-- **"Credentials not found"** — Make sure you created the `.env` file with your email and password
+- **"pip is not recognized"** — Python isn't installed, or "Add to PATH" wasn't checked during install. Reinstall Python and check that box.
+- **"Login failed"** — Double-check your BAMSec email and password
 - **"No transcripts found"** — The ticker might not have transcripts on BAMSec, or the site layout may have changed
-- **Browser pops up and does nothing** — BAMSec may have changed their website. Open an issue and we'll update the script
+- **Page won't load** — Make sure `python app.py` is still running in your terminal

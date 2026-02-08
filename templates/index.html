@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BAMSec Transcript Downloader</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 460px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            margin-top: 16px;
+        }
+        input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus { border-color: #3b82f6; }
+        input::placeholder { color: #475569; }
+        .row {
+            display: flex;
+            gap: 12px;
+        }
+        .row > div { flex: 1; }
+        button {
+            width: 100%;
+            margin-top: 28px;
+            padding: 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background: #2563eb; }
+        button:disabled {
+            background: #334155;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            line-height: 1.6;
+        }
+        #status.running {
+            display: block;
+            background: #172554;
+            border: 1px solid #1e40af;
+            color: #93c5fd;
+        }
+        #status.success {
+            display: block;
+            background: #052e16;
+            border: 1px solid #166534;
+            color: #86efac;
+        }
+        #status.error {
+            display: block;
+            background: #450a0a;
+            border: 1px solid #991b1b;
+            color: #fca5a5;
+        }
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #93c5fd;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .note {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #64748b;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>BAMSec Transcript Downloader</h1>
+        <p class="subtitle">Download the most recent earnings call transcripts as PDFs</p>
+
+        <form id="downloadForm">
+            <label for="email">BAMSec Email</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" required>
+
+            <label for="password">BAMSec Password</label>
+            <input type="password" id="password" name="password" placeholder="Your BAMSec password" required>
+
+            <div class="row">
+                <div>
+                    <label for="ticker">Stock Ticker</label>
+                    <input type="text" id="ticker" name="ticker" placeholder="e.g. RH" required
+                           style="text-transform: uppercase;">
+                </div>
+                <div>
+                    <label for="count">Transcripts</label>
+                    <input type="number" id="count" name="count" value="8" min="1" max="20">
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn">Download Transcripts</button>
+        </form>
+
+        <div id="status"></div>
+
+        <p class="note">Your credentials are only used to log into BAMSec and are never stored.</p>
+    </div>
+
+    <script>
+        const form = document.getElementById('downloadForm');
+        const status = document.getElementById('status');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const ticker = document.getElementById('ticker').value.toUpperCase();
+            const count = document.getElementById('count').value;
+
+            // Show running state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Downloading...';
+            status.className = 'running';
+            status.innerHTML = '<span class="spinner"></span>Logging into BAMSec and downloading transcripts. This takes 1-2 minutes, please wait...';
+
+            try {
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, ticker, count: parseInt(count) })
+                });
+
+                if (response.ok) {
+                    // Download the ZIP file
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${ticker}_transcripts.zip`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+
+                    status.className = 'success';
+                    status.textContent = `Done! Downloaded transcripts for ${ticker}. Check your Downloads folder.`;
+                } else {
+                    const data = await response.json();
+                    status.className = 'error';
+                    status.textContent = data.error || 'Something went wrong. Please try again.';
+                }
+            } catch (err) {
+                status.className = 'error';
+                status.textContent = 'Could not connect to the server. Make sure it is running.';
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Download Transcripts';
+        });
+    </script>
+</body>
+</html>
