@@ -28,6 +28,7 @@ from bamsec.scraper import (
     download_financials,
     download_transcripts,
     go_to_categorized,
+    go_to_company_page,
     go_to_transcripts,
     search_company,
 )
@@ -130,7 +131,7 @@ def _run_download_job(job_id: str, email: str, password: str, config: dict) -> N
                         continue
 
                     progress(f"[{ticker}] Searching for company ({ticker_idx + 1}/{len(tickers)})...")
-                    search_company(page, ticker)
+                    company_url = search_company(page, ticker)
 
                     if download_transcripts_flag:
                         go_to_transcripts(page)
@@ -140,9 +141,9 @@ def _run_download_job(job_id: str, email: str, password: str, config: dict) -> N
                         )
                         all_files.extend(files)
 
-                        # Navigate back to company page for financials
+                        # Navigate directly back to company page for financials
                         if download_financials_flag:
-                            search_company(page, ticker)
+                            go_to_company_page(page, company_url)
 
                     if download_financials_flag:
                         go_to_categorized(page)

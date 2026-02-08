@@ -6,9 +6,15 @@ from datetime import datetime
 from playwright.sync_api import Page
 
 
-def search_company(page: Page, ticker: str) -> None:
-    """Search for a company by ticker on BAMSec and navigate to its page."""
+def search_company(page: Page, ticker: str) -> str:
+    """Search for a company by ticker on BAMSec and navigate to its page.
+    Returns the company page URL so we can navigate back to it later."""
     print(f"Searching for ticker: {ticker}...")
+
+    # Go to homepage first to ensure the search bar is available
+    page.goto("https://www.bamsec.com")
+    page.wait_for_load_state("networkidle")
+    time.sleep(2)
 
     # The homepage/nav bar has a search input with placeholder "Ticker or company name"
     search_input = page.locator('input[placeholder*="Ticker"], input[placeholder*="company"]').first
@@ -34,7 +40,17 @@ def search_company(page: Page, ticker: str) -> None:
 
     page.wait_for_load_state("networkidle")
     time.sleep(2)
-    print(f"Navigated to company page for: {ticker}")
+    company_url = page.url
+    print(f"Navigated to company page for: {ticker} ({company_url})")
+    return company_url
+
+
+def go_to_company_page(page: Page, company_url: str) -> None:
+    """Navigate directly back to a company page by URL."""
+    print(f"Returning to company page...")
+    page.goto(company_url)
+    page.wait_for_load_state("networkidle")
+    time.sleep(2)
 
 
 def go_to_transcripts(page: Page) -> None:
