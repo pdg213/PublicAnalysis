@@ -163,14 +163,20 @@ def download_transcripts(
     downloaded_files = []
     for i, item in enumerate(transcript_entries, 1):
         raw_name = item["text"].replace("\n", " ").strip()
-        match = re.search(r'(\w+,\s*Q\d\s+\d{4}\s+Earnings Call[^"]*\d{4})', raw_name)
-        clean_name = match.group(1) if match else raw_name
-        clean_name = re.sub(r'[<>:"/\\|?*]', '_', clean_name)[:100]
-        filename = f"{ticker}_{clean_name}.pdf"
+
+        # Extract quarter and year for a clean filename like RH_Q3_2026_Earnings_Call.pdf
+        period_match = re.search(r'(Q\d)\s+(\d{4})', raw_name)
+        if period_match:
+            quarter = period_match.group(1)
+            year = period_match.group(2)
+            filename = f"{ticker.upper()}_{quarter}_{year}_Earnings_Call.pdf"
+        else:
+            filename = f"{ticker.upper()}_Earnings_Call_{i}.pdf"
+
         filepath = os.path.join(ticker_dir, filename)
 
         if progress_callback:
-            progress_callback(f"[{ticker}] Downloading transcript {i}/{len(transcript_entries)}: {clean_name}")
+            progress_callback(f"[{ticker}] Downloading transcript {i}/{len(transcript_entries)}: {filename}")
 
         try:
             _download_pdf(page, item["href"], filepath)
