@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import os
 import re
 import time
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from playwright.sync_api import Page
+if TYPE_CHECKING:
+    from playwright.sync_api import Page
 
 
 def search_company(page: Page, ticker: str) -> str:

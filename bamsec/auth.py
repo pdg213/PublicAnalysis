@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import os
 import time
+from typing import TYPE_CHECKING
 
-from playwright.sync_api import Page
+if TYPE_CHECKING:
+    from playwright.sync_api import Page
 
 
 def login(page: Page, email: str, password: str) -> None:
