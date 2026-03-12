@@ -132,7 +132,14 @@ def download_transcripts(
             text = (link.text_content(timeout=2000) or "").strip()
             href = link.get_attribute("href") or ""
             if "Earnings Call" in text and href:
-                transcript_entries.append({"text": text, "href": href})
+                # Also grab the parent row text for extra context (dates, quarters)
+                row_text = text
+                try:
+                    parent = link.locator("xpath=ancestor::tr").first
+                    row_text = (parent.text_content(timeout=2000) or "").strip()
+                except Exception:
+                    pass
+                transcript_entries.append({"text": text, "href": href, "row_text": row_text})
         except Exception:
             continue
 
@@ -146,7 +153,7 @@ def download_transcripts(
                     link = row.locator("a").first
                     href = link.get_attribute("href") or ""
                     if href:
-                        transcript_entries.append({"text": text, "href": href})
+                        transcript_entries.append({"text": text, "href": href, "row_text": text})
             except Exception:
                 continue
 
@@ -163,13 +170,27 @@ def download_transcripts(
     downloaded_files = []
     for i, item in enumerate(transcript_entries, 1):
         raw_name = item["text"].replace("\n", " ").strip()
+        row_text = item.get("row_text", raw_name).replace("\n", " ").strip()
 
-        # Extract quarter and year for a clean filename like RH_Q3_2026_Earnings_Call.pdf
-        period_match = re.search(r'(Q\d)\s+(\d{4})', raw_name)
+        # Try to extract quarter and year from link text or parent row
+        # Patterns like "Q3 2026" or "Q1 2025"
+        period_match = (
+            re.search(r'(Q\d)\s+(\d{4})', raw_name)
+            or re.search(r'(Q\d)\s+(\d{4})', row_text)
+        )
+        # Also try date patterns like "Dec 11, 2025" or "Mar 2025"
+        date_match = re.search(
+            r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s+(\d{4})', row_text
+        )
+
         if period_match:
             quarter = period_match.group(1)
             year = period_match.group(2)
             filename = f"{ticker.upper()}_{quarter}_{year}_Earnings_Call.pdf"
+        elif date_match:
+            month = date_match.group(1)
+            year = date_match.group(2)
+            filename = f"{ticker.upper()}_{month}_{year}_Earnings_Call.pdf"
         else:
             filename = f"{ticker.upper()}_Earnings_Call_{i}.pdf"
 
